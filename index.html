@@ -71,17 +71,27 @@
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           const page = await pdf.getPage(pageNum);
           
-          // 모바일 체크
+          // 모바일 체크 및 스케일 설정
           const isMobile = window.innerWidth <= 768;
-          const scale = isMobile ? 1.2 : 1.5;
+          const baseScale = isMobile ? 1.5 : 2.0;
+          
+          // 고해상도 디스플레이 지원
+          const pixelRatio = window.devicePixelRatio || 1;
+          const scale = baseScale * pixelRatio;
           
           const viewport = page.getViewport({ scale });
           
           // 캔버스 생성
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
+          
+          // 실제 캔버스 크기 (고해상도)
           canvas.height = viewport.height;
           canvas.width = viewport.width;
+          
+          // CSS 표시 크기 (화면에 맞춤)
+          canvas.style.height = Math.floor(viewport.height / pixelRatio) + 'px';
+          canvas.style.width = Math.floor(viewport.width / pixelRatio) + 'px';
           canvas.className = 'pdf-page';
           
           // 페이지 렌더링
