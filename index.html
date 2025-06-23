@@ -14,7 +14,7 @@
     
     #pdf-container {
       width: 100%;
-      height: 100vh;
+      height: calc(100vh - 80px);
       overflow: auto;
       text-align: center;
       padding: 20px 0;
@@ -37,6 +37,37 @@
       color: #666;
     }
     
+    .header {
+      background: #f8f9fa;
+      padding: 20px;
+      text-align: center;
+      border-bottom: 1px solid #e9ecef;
+    }
+    
+    #download-link {
+      color: #007AFF;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      border-bottom: 1px solid transparent;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    #download-link:hover {
+      color: #0056b3;
+      border-bottom-color: #0056b3;
+    }
+    
+    .download-text::after {
+      content: ' ↓';
+      font-size: 14px;
+      opacity: 0.7;
+    }
+    
     /* 모바일 최적화 */
     @media (max-width: 768px) {
       #pdf-container {
@@ -46,16 +77,28 @@
         max-width: 100%;
         height: auto !important;
       }
+      
+      .header {
+        padding: 16px;
+      }
+      
+      #download-link {
+        font-size: 18px;
+      }
     }
   </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
-  <div id="loading">PDF 로딩 중...</div>
+  <div id="loading">Loading PDF...</div>
+  <div class="header">
+    <a id="download-link" href="resume.pdf" download="resume.pdf">
+      <span class="download-text">Download PDF</span>
+    </a>
+  </div>
   <div id="pdf-container"></div>
 
   <script>
-    // PDF.js 워커 설정
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     async function renderPDF() {
@@ -64,37 +107,29 @@
         const container = document.getElementById('pdf-container');
         const loading = document.getElementById('loading');
         
-        // 로딩 메시지 숨기기
         loading.style.display = 'none';
         
-        // 모든 페이지 렌더링
         for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
           const page = await pdf.getPage(pageNum);
           
-          // 모바일 체크 및 스케일 설정
           const isMobile = window.innerWidth <= 768;
           const baseScale = isMobile ? 1.5 : 2.0;
           
-          // 고해상도 디스플레이 지원
           const pixelRatio = window.devicePixelRatio || 1;
           const scale = baseScale * pixelRatio;
           
           const viewport = page.getViewport({ scale });
           
-          // 캔버스 생성
           const canvas = document.createElement('canvas');
           const context = canvas.getContext('2d');
           
-          // 실제 캔버스 크기 (고해상도)
           canvas.height = viewport.height;
           canvas.width = viewport.width;
           
-          // CSS 표시 크기 (화면에 맞춤)
           canvas.style.height = Math.floor(viewport.height / pixelRatio) + 'px';
           canvas.style.width = Math.floor(viewport.width / pixelRatio) + 'px';
           canvas.className = 'pdf-page';
           
-          // 페이지 렌더링
           const renderContext = {
             canvasContext: context,
             viewport: viewport
@@ -103,22 +138,21 @@
           await page.render(renderContext).promise;
           container.appendChild(canvas);
         }
-      } catch (error) {
-        console.error('PDF 로딩 에러:', error);
-        document.getElementById('loading').textContent = 'PDF 로딩에 실패했습니다.';
-      }
+             } catch (error) {
+         console.error('PDF loading error:', error);
+         document.getElementById('loading').textContent = 'Failed to load PDF.';
+       }
     }
 
-    // 페이지 로드 시 PDF 렌더링
     window.addEventListener('load', renderPDF);
     
-    // 화면 크기 변경 시 재렌더링
     let resizeTimer;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(() => {
         document.getElementById('pdf-container').innerHTML = '';
-        document.getElementById('loading').style.display = 'block';
+                 document.getElementById('loading').style.display = 'block';
+         document.getElementById('loading').textContent = 'Loading PDF...';
         renderPDF();
       }, 500);
     });
